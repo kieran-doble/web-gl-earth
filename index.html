@@ -19,17 +19,16 @@
     varying vec3 vNormalEye;
     varying vec3 vPositionEye3;
 
-    void main(void) {
-        gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);
-        vTextureCoord = aTextureCoord;
+    void main() {
+      vec4 vertexPositionEye4 = uMVMatrix * vec4(aVertexPosition, 1.0);
+      vPositionEye3 = vertexPositionEye4.xyz / vertexPositionEye4.w;
 
-        if (!uUseLighting) {
-            vLightWeighting = vec3(1.0, 1.0, 1.0);
-        } else {
-            vec3 transformedNormal = uNMatrix * aVertexNormal;
-            float directionalLightWeighting = max(dot(transformedNormal, uLightingDirection), 0.0);
-            vLightWeighting = uAmbientColor + uDirectionalColor * directionalLightWeighting;
-        }
+      vNormalEye = normalize(uNMatrix * aVertexNormal);
+
+        gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);
+        vTextureCoordinates = aTextureCoordinates;
+
+
     }
 </script>
 <script id="shader-fs" type="x-shader/x-fragment">
@@ -40,10 +39,10 @@
     varying vec3 vPositionEye3;
 
 
+    uniform vec3 uLightPosition;
     uniform vec3 uAmbientLightColor;
     uniform vec3 uDiffuseLightColor;
     uniform vec3 uSpecularLightColor;
-    uniform vec3 uLightposition;
     uniform vec3 uSpotDirection;
     uniform sampler2D uSampler;
 
@@ -52,7 +51,7 @@
     // cutoff angle of spot light
     const float spotCosCutoff = 0.97; // corresponds to 14 degrees
 
-    vec3 vLightWeighting = vec3(0.0, 0.0, 0.0);
+    vec3 vLightWeighting = vec3(0.0, 0.0, 1.0);
 
     void main() {
       // Calculate the vector (L) to the light source.
@@ -62,37 +61,13 @@
       float diffuseLightWeighting = max(dot(vNormalEye,
       vectorToLightSource), 0.0);
 
-      // We only do spot and specular light calculations if we
-      // have diffuse light term.
-      if (diffuseLightWeighting > 0.0) {
+      vec3 reflectionVector = normalize(reflect(-vectorToLightSource,vNormalEye));
 
-      // Calculate the intensity of spot light in the direction of
-          // vectorToLightSource.
-          float spotEffect = dot(normalize(uSpotDirection),
-                normalize(-vectorToLightSource));
+      vec3 viewVectorEye = -normalize(vPositionEye3);
+      float rdotv = max(dot(reflectionVector, viewVectorEye), 0.0);
+      float specularLightWeighting = pow(rdotv, shininess);
 
-          // Check that we are inside the spot light cone
-      if (spotEffect > spotCosCutoff) {
-        spotEffect = pow(spotEffect, spotExponent);
-
-        // Calculate the reflection vector (R) needed for specular
-        // light
-        vec3 reflectionVector = normalize(reflect(-
-          vectorToLightSource,vNormalEye));
-
-        // Calculate view vector (V) in eye coordinates as
-        // (0.0, 0.0, 0.0) - vPositionEye3
-        vec3 viewVectorEye = -normalize(vPositionEye3);
-        float rdotv = max(dot(reflectionVector, viewVectorEye), 0.0);
-        float specularLightWeighting = pow(rdotv, shininess);
-        lightWeighting =
-            spotEffect * uDiffuseLightColor * diffuseLightWeighting +
-            spotEffect * uSpecularLightColor * specularLightWeighting;
-      }
-      }
-
-      // Always add the ambient light
-      lightWeighting += uAmbientLightColor;
+      vec3 lightWeighting = uAmbientLightColor + uDiffuseLightColor * diffuseLightWeighting + uSpecularLightColor * specularLightWeighting;
 
       vec4 texelColor = texture2D(uSampler, vTextureCoordinates);
 
@@ -187,27 +162,27 @@ function setupShaders() { //initShaders
 
     gl.useProgram(shaderProgram);
 
-    shaderProgram.vertexPositionAttribute = gl.getAttribLocation(shaderProgram,
+    pwgl.vertexPositionAttributeLoc = gl.getAttribLocation(shaderProgram,
     "aVertexPosition");
-    shaderProgram.textureCoordAttribute = gl.getAttribLocation(shaderProgram,
+    pwgl.vertexTextureAttributeLoc = gl.getAttribLocation(shaderProgram,
     "aTextureCoordinates");
-    shaderProgram.mvMatrixUniform = gl.getUniformLocation(shaderProgram,
+    pwgl.uniformMVMatrixLoc = gl.getUniformLocation(shaderProgram,
     "uMVMatrix");
-    shaderProgram.pMatrixUniform = gl.getUniformLocation(shaderProgram,
+    pwgl.uniformProjMatrixLoc = gl.getUniformLocation(shaderProgram,
     "uPMatrix");
-    shaderProgram.samplerUniform = gl.getUniformLocation(shaderProgram,
+    pwgl.uniformSamplerLoc = gl.getUniformLocation(shaderProgram,
     "uSampler");
-    shaderProgram.nMatrixUniform = gl.getUniformLocation(shaderProgram,
+    pwgl.uniformNormalMatrixLoc = gl.getUniformLocation(shaderProgram,
     "uNMatrix");
-    shaderProgram.vertexNormalAttribute = gl.getAttribLocation(shaderProgram,
+    pwgl.vertexNormalAttributeLoc = gl.getAttribLocation(shaderProgram,
     "aVertexNormal");
-    shaderProgram.useLightingUniform = gl.getUniformLocation(shaderProgram,
+    pwgl.uniformLightPositionLoc = gl.getUniformLocation(shaderProgram,
     "uLightPosition");
-    shaderProgram.ambientColorUniform = gl.getUniformLocation(shaderProgram,
+    pwgl.uniformAmbientLightColorLoc = gl.getUniformLocation(shaderProgram,
     "uAmbientLightColor");
-    shaderProgram.lightingDirectionUniform = gl.getUniformLocation(shaderProgram,
+    pwgl.uniformDiffuseLightColorLoc = gl.getUniformLocation(shaderProgram,
     "uDiffuseLightColor");
-    shaderProgram.directionalColorUniform = gl.getUniformLocation(shaderProgram,
+    pwgl.uniformSpecularLightColorLoc = gl.getUniformLocation(shaderProgram,
     "uSpecularLightColor");
 
     gl.enableVertexAttribArray(pwgl.vertexNormalAttributeLoc);
@@ -231,7 +206,14 @@ throw "Error popModelViewMatrix() - Stack was empty ";
   pwgl.modelViewMatrix = pwgl.modelViewMatrixStack.pop();
 }
 
-function setupShaders() {
+function uploadNormalMatrixToShader(){
+  var normalMatrix = mat3.create();
+  mat4.toInverseMat3(pwgl.modelViewMatrix, normalMatrix);
+  mat3.transpose(normalMatrix);
+  gl.uniformMatrix3fv(pwgl.uniformNormalMatrixLoc, false, normalMatrix);
+}
+
+function setupTextures() {
   // Texture for earth
   pwgl.earthTexture = gl.createTexture();
   loadImageForTexture("textures/earth.jpg", pwgl.earthTexture);
@@ -240,7 +222,7 @@ function setupShaders() {
 function loadImageForTexture(url, texture) {
   var image = new Image();
   image.onload = function() {
-    pwgl.ongoingImageLoads.splice(pwgl.ongoingImageLoads.indexof(image), 1);
+    pwgl.ongoingImageLoads.splice(pwgl.ongoingImageLoads.indexOf(image), 1);
     textureFinishedLoading(image, texture);
   }
   pwgl.ongoingImageLoads.push(image);
@@ -248,7 +230,7 @@ function loadImageForTexture(url, texture) {
 }
 
 
-function textureFinishedLoading(iamge, texture) {
+function textureFinishedLoading(image, texture) {
     gl.bindTexture(gl.TEXTURE_2D, texture);
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
@@ -288,12 +270,8 @@ function uploadProjectionMatrixToShader() {
   gl.uniformMatrix4fv(pwgl.uniformProjMatrixLoc, false, pwgl.projectionMatrix);
 }
 
-
-
-
-
 function degToRad(degrees) {
-    return degrees * Math.PI / 180;
+    return degrees * Math.PI / 10;  //180
 }
 
 
@@ -315,7 +293,7 @@ var earthVertexIndexBuffer;
 function setupEarthBuffers() {
     var latitudeBands = 30;
     var longitudeBands = 30;
-    var radius = 2;
+    var radius = 5;
 
     var vertexPositionData = [];
     var normalData = [];
@@ -388,6 +366,24 @@ function setupEarthBuffers() {
 }
 
 
+function drawSphere(texture){
+  gl.bindBuffer(gl.ARRAY_BUFFER, earthVertexPositionBuffer);
+  gl.vertexAttribPointer(pwgl.vertexPositionAttributeLoc, earthVertexPositionBuffer.itemSize, gl.FLOAT, false, 0, 0);
+
+  gl.bindBuffer(gl.ARRAY_BUFFER, earthVertexNormalBuffer);
+  gl.vertexAttribPointer(pwgl.vertexNormalAttributeLoc, earthVertexNormalBuffer.itemSize, gl.FLOAT, false, 0, 0);
+
+  gl.bindBuffer(gl.ARRAY_BUFFER, earthVertexTextureCoordBuffer);
+  gl.vertexAttribPointer(pwgl.vertexTextureAttributeLoc, earthVertexTextureCoordBuffer.itemSize, gl.FLOAT, false, 0, 0);
+  gl.activeTexture(gl.TEXTURE0);
+  gl.bindTexture(gl.TEXTURE_2D, texture);
+
+  gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, earthVertexIndexBuffer);
+  gl.drawElements(gl.TRIANGLES, earthVertexIndexBuffer.numItems, gl.UNSIGNED_SHORT, 0);
+
+
+}
+
 function drawScene() {
   pwgl.requestId = requestAnimFrame(drawScene);
 
@@ -403,13 +399,9 @@ pwgl.nbrOfFramesForFPS = 0;
 pwgl.previousFrameTimeStamp = currentTime;
   }
 
-//console.log("1   xRot= "+xRot+"    yRot="+yRot+"  t= "+transl);
-mat4.translate(pwgl.modelViewMatrix, [0.0, transY, transZ],
-  pwgl.modelViewMatrix);
-mat4.rotateX(pwgl.modelViewMatrix, xRot/50, pwgl.modelViewMatrix);
-mat4.rotateY(pwgl.modelViewMatrix, yRot/50, pwgl.modelViewMatrix);
 
-yRot = xRot = zRot =transY=transZ=0;
+
+// yRot = xRot = zRot =transY=transZ=0;
 
 uploadModelViewMatrixToShader();
 uploadProjectionMatrixToShader();
@@ -419,20 +411,15 @@ gl.uniform1i(pwgl.uniformSamplerLoc, 0);
 gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
 gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-
-
-// Draw table
-// pushModelViewMatrix();
-// mat4.translate(pwgl.modelViewMatrix, [0.0, 1.1, 0.0],
-//           pwgl.modelViewMatrix);
-// uploadModelViewMatrixToShader();
-// uploadNormalMatrixToShader();
-// drawTable();
-// popModelViewMatrix();
-
 // Calculate the position for the box that is initially
 // on top of the table but will then be moved during animation
 pushModelViewMatrix();
+mat4.rotate(pwgl.modelViewMatrix, degToRad(45), pwgl.modelViewMatrix);
+uploadModelViewMatrixToShader();
+uploadNormalMatrixToShader();
+drawSphere(pwgl.earthTexture);
+popModelViewMatrix();
+
 if (currentTime === undefined) {
 currentTime = Date.now();
 }
@@ -441,57 +428,39 @@ if (pwgl.animationStartTime === undefined) {
 pwgl.animationStartTime = currentTime;
 }
 
-// Update the position of the box
-if (pwgl.y < 5) {
-pwgl.y = 2.7 + (currentTime - pwgl.animationStartTime)/3000 *
-          (5.0 - 2.7);
-} else {
-pwgl.angle = (currentTime - pwgl.animationStartTime)/2000*2*Math.PI %
-(2*Math.PI);
-pwgl.x = Math.cos(pwgl.angle) * pwgl.circleRadius;
-pwgl.z = Math.sin(pwgl.angle) * pwgl.circleRadius;
-}
+// // // Update the position of the box
+// if (pwgl.y < 5) {
+// pwgl.y = 2.7 + (currentTime - pwgl.animationStartTime)/3000 *
+//           (5.0 - 2.7);
+// } else {
+// pwgl.angle = (currentTime - pwgl.animationStartTime)/2000*2*Math.PI %
+// (2*Math.PI);
+// pwgl.x = Math.cos(pwgl.angle) * pwgl.circleRadius;
+// pwgl.z = Math.sin(pwgl.angle) * pwgl.circleRadius;
+// }
 
-mat4.translate(pwgl.modelViewMatrix, [pwgl.x, pwgl.y, pwgl.z],
-pwgl.modelViewMatrix);
-mat4.scale(pwgl.modelViewMatrix, [0.5, 0.5, 0.5], pwgl.modelViewMatrix);
-uploadModelViewMatrixToShader();
-uploadNormalMatrixToShader();
-//drawCube(pwgl.boxTexture);
-popModelViewMatrix();
+//console.log("1   xRot= "+xRot+"    yRot="+yRot+"  t= "+transl);
+// mat4.translate(pwgl.modelViewMatrix, [0.0, transY, transZ], pwgl.modelViewMatrix);
+// mat4.rotateX(pwgl.modelViewMatrix, xRot/50, pwgl.modelViewMatrix);
+// mat4.rotateY(pwgl.modelViewMatrix, yRot/50, pwgl.modelViewMatrix);
+//
+// mat4.translate(pwgl.modelViewMatrix, [pwgl.x, pwgl.y, pwgl.z],
+// pwgl.modelViewMatrix);
+// mat4.scale(pwgl.modelViewMatrix, [0.5, 0.5, 0.5], pwgl.modelViewMatrix);
+// uploadModelViewMatrixToShader();
+// uploadNormalMatrixToShader();
+
 
 // Update number of drawn frames to be able to count fps
 pwgl.nbrOfFramesForFPS++;
 
-    mat4.identity(mvMatrix);
-
-    mat4.translate(mvMatrix, [0, 0, -6]);
-
-    mat4.multiply(mvMatrix, earthRotationMatrix);
-
-    gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, earthTexture);
-    gl.uniform1i(shaderProgram.samplerUniform, 0);
-
-    gl.bindBuffer(gl.ARRAY_BUFFER, earthVertexPositionBuffer);
-    gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, earthVertexPositionBuffer.itemSize, gl.FLOAT, false, 0, 0);
-
-    gl.bindBuffer(gl.ARRAY_BUFFER, earthVertexTextureCoordBuffer);
-    gl.vertexAttribPointer(shaderProgram.textureCoordAttribute, earthVertexTextureCoordBuffer.itemSize, gl.FLOAT, false, 0, 0);
-
-    gl.bindBuffer(gl.ARRAY_BUFFER, earthVertexNormalBuffer);
-    gl.vertexAttribPointer(shaderProgram.vertexNormalAttribute, earthVertexNormalBuffer.itemSize, gl.FLOAT, false, 0, 0);
-
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, earthVertexIndexBuffer);
-    setMatrixUniforms();
-    gl.drawElements(gl.TRIANGLES, earthVertexIndexBuffer.numItems, gl.UNSIGNED_SHORT, 0);
 }
 
 
-function tick() {
-    requestAnimFrame(tick);
-    drawScene();
-}
+// function tick() {
+//     requestAnimFrame(tick);
+//     drawScene();
+// }
 
 
 function handleContextLost(event) {
@@ -514,12 +483,6 @@ setupTextures();
 gl.clearColor(0.0, 0.0, 0.0, 1.0);
 gl.enable(gl.DEPTH_TEST);
 
-// Initialize some varibles for the moving box
-pwgl.x = 0.0;
-pwgl.y = 2.7;
-pwgl.z = 0.0;
-pwgl.circleRadius = 4.0;
-pwgl.angle = 0;
 
 // Initialize some variables related to the animation
 pwgl.animationStartTime = undefined;
@@ -530,11 +493,11 @@ pwgl.previousFrameTimeStamp = Date.now();
 mat4.perspective(60, gl.viewportWidth / gl.viewportHeight,
 1, 100.0, pwgl.projectionMatrix);
 mat4.identity(pwgl.modelViewMatrix);
-mat4.lookAt([8, 12, 8],[0, 0, 0], [0, 1,0], pwgl.modelViewMatrix);
+mat4.lookAt([15, 0, 5],[0, 0, 0], [0, 0,-1], pwgl.modelViewMatrix);
 }
 
 function handleContextRestored(event) {
-  drawEarth();
+  init();
   pwgl.requestId = requestAnimFrame(draw,canvas);
 }
 
@@ -565,6 +528,7 @@ if (pwgl.circleRadius < 0) {
 function startup() {
   canvas = document.getElementById("myGLCanvas");
     canvas = WebGLDebugUtils.makeLostContextSimulatingCanvas(canvas);
+
     canvas.addEventListener('webglcontextlost', handleContextLost, false);
     canvas.addEventListener('webglcontextrestored', handleContextRestored,
     false);
@@ -575,6 +539,10 @@ function startup() {
     canvas.addEventListener('mouseup', mymouseup, false);
     canvas.addEventListener('mousewheel', wheelHandler, false);
     canvas.addEventListener('DOMMouseScroll', wheelHandler, false);
+
+    gl = createGLContext(canvas);
+
+    init();
 
     pwgl.fpsCounter = document.getElementById("fps");
     // Draw the complete scene
@@ -621,7 +589,7 @@ ev.preventDefault();
 </script>
 </head>
 <body onload="startup();">
-    <canvas id="myGLCanvas" width="500" height="500"></canvas>
+    <canvas id="myGLCanvas" width="600" height="600"></canvas>
     <div id="fps-counter"> FPS: <span id="fps">--</span></div>
 </body>
 </html>
