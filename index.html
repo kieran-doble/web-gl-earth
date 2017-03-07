@@ -514,7 +514,7 @@ function setupBuffers() {
 function setupLights() {
   // Play with light position and orientation to see its effect.
   gl.uniform3fv(pwgl.uniformLightPositionLoc, [60.0, 60.0, 0.0]);
-  gl.uniform3fv(pwgl.uniformAmbientLightColorLoc, [0.2, 0.2, 0.2]);
+  gl.uniform3fv(pwgl.uniformAmbientLightColorLoc, [0.05, 0.05, 0.05]);
   gl.uniform3fv(pwgl.uniformDiffuseLightColorLoc, [0.8, 0.8, 0.8]);
   gl.uniform3fv(pwgl.uniformSpecularLightColorLoc, [0.1, 0.1, 0.1]);
 }
@@ -584,7 +584,7 @@ function drawSatellite(){
 // Solar panels
   pushModelViewMatrix();
   mat4.translate(pwgl.modelViewMatrix, [0.0, 0.0, 1], pwgl.modelViewMatrix);
-  mat4.scale(pwgl.modelViewMatrix, [1, 0.01, 2], pwgl.modelViewMatrix);
+  mat4.scale(pwgl.modelViewMatrix, [1, 0.05, 2], pwgl.modelViewMatrix);
   uploadModelViewMatrixToShader();
   uploadNormalMatrixToShader();
   drawCube(pwgl.satelliteTexture);  //Draw the legs with woodTexture
@@ -592,7 +592,7 @@ function drawSatellite(){
 
   pushModelViewMatrix();
   mat4.translate(pwgl.modelViewMatrix, [0.0, 0.0, -1], pwgl.modelViewMatrix);
-  mat4.scale(pwgl.modelViewMatrix, [1, 0.01, 2], pwgl.modelViewMatrix);
+  mat4.scale(pwgl.modelViewMatrix, [1, 0.05, 2], pwgl.modelViewMatrix);
   uploadModelViewMatrixToShader();
   uploadNormalMatrixToShader();
   drawCube(pwgl.satelliteTexture);  //Draw the legs with woodTexture
