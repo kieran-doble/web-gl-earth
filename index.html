@@ -5,6 +5,18 @@
 <script src="webgl-debug.js"></script>
 <script type="text/javascript" src="glMatrix.js"></script>
 <script src="webgl-utils.js"></script>
+<style media="screen">
+body{
+background: url(textures/background.jpg) no-repeat center center fixed;
+background-size: cover;
+}
+canvas{
+  padding: 0;
+    margin: auto;
+    display: block;
+    width: 800px;
+}
+</style>
 <meta charset="utf-8">
 
 
@@ -475,8 +487,8 @@ function setupTextures() {
   loadImageForTexture("textures/gold.jpg", pwgl.satelliteTexture);
 
   // Texture for the box on the table
-  pwgl.boxTexture = gl.createTexture();
-  loadImageForTexture("wicker_256.jpg", pwgl.boxTexture);
+  pwgl.solarTexture = gl.createTexture();
+  loadImageForTexture("textures/blue.png", pwgl.solarTexture);
 }
 
 function loadImageForTexture(url, texture) {
@@ -587,7 +599,7 @@ function drawSatellite(){
   mat4.scale(pwgl.modelViewMatrix, [1, 0.05, 2], pwgl.modelViewMatrix);
   uploadModelViewMatrixToShader();
   uploadNormalMatrixToShader();
-  drawCube(pwgl.satelliteTexture);  //Draw the legs with woodTexture
+  drawCube(pwgl.solarTexture);  //Draw the legs with woodTexture
   popModelViewMatrix();
 
   pushModelViewMatrix();
@@ -595,7 +607,7 @@ function drawSatellite(){
   mat4.scale(pwgl.modelViewMatrix, [1, 0.05, 2], pwgl.modelViewMatrix);
   uploadModelViewMatrixToShader();
   uploadNormalMatrixToShader();
-  drawCube(pwgl.satelliteTexture);  //Draw the legs with woodTexture
+  drawCube(pwgl.solarTexture);  //Draw the legs with woodTexture
   popModelViewMatrix();
 
 
@@ -692,7 +704,7 @@ setupShaders();
 setupBuffers();
 setupLights();
 setupTextures();
-gl.clearColor(0.0, 0.0, 0.0, 1.0);
+//gl.clearColor(0.0, 0.0, 0.0, 1.0);
 gl.enable(gl.DEPTH_TEST);
 
 // Initialize some varibles for the moving box
@@ -825,6 +837,6 @@ ev.preventDefault();
 
 </head>
 <body onload="startup();">
-<canvas id="myGLCanvas" width="600" height="600"></canvas>
+<canvas id="myGLCanvas" width="650" height="650"></canvas>
 </body>
 </html>
