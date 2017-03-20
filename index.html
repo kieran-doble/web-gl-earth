@@ -246,25 +246,23 @@ throw "Error popModelViewMatrix() - Stack was empty ";
         var latitudeSegments = 60;
         var longitudeSegments = 60;
         var radius = 5;
-
-        var vertexPositionData = [];
-        var normalData = [];
         var textureCoordData = [];
+        var normalData = [];
+        var vertexPositionData = [];
         for (var latNumber=0; latNumber <= latitudeSegments; latNumber++) {
-            var theta = latNumber * Math.PI / latitudeSegments;
-            var sinTheta = Math.sin(theta);
-            var cosTheta = Math.cos(theta);
+        var theta = latNumber * Math.PI / latitudeSegments;
+        var cosTheta = Math.cos(theta);
+        var sinTheta = Math.sin(theta);
+        for (var longNumber=0; longNumber <= longitudeSegments; longNumber++) {
+            var phi = longNumber * Math.PI* 2  / longitudeSegments;
+            var cosPhi = Math.cos(phi);
+            var sinPhi = Math.sin(phi);
+            var u = 1 - (longNumber / longitudeSegments);
+            var v = 1 - (latNumber / latitudeSegments);
+            var x = cosPhi * sinTheta;
+            var y = cosTheta;
+            var z = sinPhi * sinTheta;
 
-            for (var longNumber=0; longNumber <= longitudeSegments; longNumber++) {
-                var phi = longNumber * 2 * Math.PI / longitudeSegments;
-                var sinPhi = Math.sin(phi);
-                var cosPhi = Math.cos(phi);
-
-                var x = cosPhi * sinTheta;
-                var y = cosTheta;
-                var z = sinPhi * sinTheta;
-                var u = 1 - (longNumber / longitudeSegments);
-                var v = 1 - (latNumber / latitudeSegments);
 
                 normalData.push(x);
                 normalData.push(y);
