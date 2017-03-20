@@ -1,4 +1,5 @@
 <!DOCTYPE HTML>
+<!-- Many thanks to Dr. Jiacheng Tan, for learning support and providing template to base code on. -->
 <html lang="en">
 <head>
 <title> Phong Lighting, Phone Shading and Spotlight </title>
@@ -234,34 +235,36 @@ throw "Error popModelViewMatrix() - Stack was empty ";
 }
 
 
-    var moonVertexPositionBuffer;
-    var moonVertexNormalBuffer;
-    var moonVertexTextureCoordBuffer;
-    var moonVertexIndexBuffer;
+    var earthVertexPositionBuffer;
+    var earthVertexNormalBuffer;
+    var earthVertexTextureCoordBuffer;
+    var earthVertexIndexBuffer;
 
+    // Calcution for sphere was learnt from resource lesson 11 - sphere, rotation matrices
+    // and mouse events. http://learningwebgl.com/blog/?p=1253
     function setupEarthBuffers() {
-        var latitudeBands = 60;
-        var longitudeBands = 60;
+        var latitudeSegments = 60;
+        var longitudeSegments = 60;
         var radius = 5;
 
         var vertexPositionData = [];
         var normalData = [];
         var textureCoordData = [];
-        for (var latNumber=0; latNumber <= latitudeBands; latNumber++) {
-            var theta = latNumber * Math.PI / latitudeBands;
+        for (var latNumber=0; latNumber <= latitudeSegments; latNumber++) {
+            var theta = latNumber * Math.PI / latitudeSegments;
             var sinTheta = Math.sin(theta);
             var cosTheta = Math.cos(theta);
 
-            for (var longNumber=0; longNumber <= longitudeBands; longNumber++) {
-                var phi = longNumber * 2 * Math.PI / longitudeBands;
+            for (var longNumber=0; longNumber <= longitudeSegments; longNumber++) {
+                var phi = longNumber * 2 * Math.PI / longitudeSegments;
                 var sinPhi = Math.sin(phi);
                 var cosPhi = Math.cos(phi);
 
                 var x = cosPhi * sinTheta;
                 var y = cosTheta;
                 var z = sinPhi * sinTheta;
-                var u = 1 - (longNumber / longitudeBands);
-                var v = 1 - (latNumber / latitudeBands);
+                var u = 1 - (longNumber / longitudeSegments);
+                var v = 1 - (latNumber / latitudeSegments);
 
                 normalData.push(x);
                 normalData.push(y);
@@ -275,10 +278,10 @@ throw "Error popModelViewMatrix() - Stack was empty ";
         }
 
         var indexData = [];
-        for (var latNumber=0; latNumber < latitudeBands; latNumber++) {
-            for (var longNumber=0; longNumber < longitudeBands; longNumber++) {
-                var first = (latNumber * (longitudeBands + 1)) + longNumber;
-                var second = first + longitudeBands + 1;
+        for (var latNumber=0; latNumber < latitudeSegments; latNumber++) {
+            for (var longNumber=0; longNumber < longitudeSegments; longNumber++) {
+                var first = (latNumber * (longitudeSegments + 1)) + longNumber;
+                var second = first + longitudeSegments + 1;
                 indexData.push(first);
                 indexData.push(second);
                 indexData.push(first + 1);
@@ -289,29 +292,29 @@ throw "Error popModelViewMatrix() - Stack was empty ";
             }
         }
 
-        moonVertexNormalBuffer = gl.createBuffer();
-        gl.bindBuffer(gl.ARRAY_BUFFER, moonVertexNormalBuffer);
+        earthVertexNormalBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, earthVertexNormalBuffer);
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(normalData), gl.STATIC_DRAW);
-        moonVertexNormalBuffer.itemSize = 3;
-        moonVertexNormalBuffer.numItems = normalData.length / 3;
+        earthVertexNormalBuffer.itemSize = 3;
+        earthVertexNormalBuffer.numItems = normalData.length / 3;
 
-        moonVertexTextureCoordBuffer = gl.createBuffer();
-        gl.bindBuffer(gl.ARRAY_BUFFER, moonVertexTextureCoordBuffer);
+        earthVertexTextureCoordBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, earthVertexTextureCoordBuffer);
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(textureCoordData), gl.STATIC_DRAW);
-        moonVertexTextureCoordBuffer.itemSize = 2;
-        moonVertexTextureCoordBuffer.numItems = textureCoordData.length / 2;
+        earthVertexTextureCoordBuffer.itemSize = 2;
+        earthVertexTextureCoordBuffer.numItems = textureCoordData.length / 2;
 
-        moonVertexPositionBuffer = gl.createBuffer();
-        gl.bindBuffer(gl.ARRAY_BUFFER, moonVertexPositionBuffer);
+        earthVertexPositionBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, earthVertexPositionBuffer);
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertexPositionData), gl.STATIC_DRAW);
-        moonVertexPositionBuffer.itemSize = 3;
-        moonVertexPositionBuffer.numItems = vertexPositionData.length / 3;
+        earthVertexPositionBuffer.itemSize = 3;
+        earthVertexPositionBuffer.numItems = vertexPositionData.length / 3;
 
-        moonVertexIndexBuffer = gl.createBuffer();
-        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, moonVertexIndexBuffer);
+        earthVertexIndexBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, earthVertexIndexBuffer);
         gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indexData), gl.STATIC_DRAW);
-        moonVertexIndexBuffer.itemSize = 1;
-        moonVertexIndexBuffer.numItems = indexData.length;
+        earthVertexIndexBuffer.itemSize = 1;
+        earthVertexIndexBuffer.numItems = indexData.length;
     }
 
 
@@ -617,19 +620,20 @@ function drawEarth(texture) {
     gl.activeTexture(gl.TEXTURE0);
   gl.bindTexture(gl.TEXTURE_2D, texture);
 
-  gl.bindBuffer(gl.ARRAY_BUFFER, moonVertexPositionBuffer);
-  gl.vertexAttribPointer(pwgl.vertexPositionAttributeLoc, moonVertexPositionBuffer.itemSize, gl.FLOAT, false, 0, 0);
+  gl.bindBuffer(gl.ARRAY_BUFFER, earthVertexPositionBuffer);
+  gl.vertexAttribPointer(pwgl.vertexPositionAttributeLoc, earthVertexPositionBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
-  gl.bindBuffer(gl.ARRAY_BUFFER, moonVertexTextureCoordBuffer);
-  gl.vertexAttribPointer(pwgl.vertexTextureAttributeLoc, moonVertexTextureCoordBuffer.itemSize, gl.FLOAT, false, 0, 0);
+  gl.bindBuffer(gl.ARRAY_BUFFER, earthVertexTextureCoordBuffer);
+  gl.vertexAttribPointer(pwgl.vertexTextureAttributeLoc, earthVertexTextureCoordBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
-  gl.bindBuffer(gl.ARRAY_BUFFER, moonVertexNormalBuffer);
-  gl.vertexAttribPointer(pwgl.vertexNormalAttributeLoc, moonVertexNormalBuffer.itemSize, gl.FLOAT, false, 0, 0);
+  gl.bindBuffer(gl.ARRAY_BUFFER, earthVertexNormalBuffer);
+  gl.vertexAttribPointer(pwgl.vertexNormalAttributeLoc, earthVertexNormalBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
-  gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, moonVertexIndexBuffer);
+  gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, earthVertexIndexBuffer);
 
-  gl.drawElements(gl.TRIANGLES, moonVertexIndexBuffer.numItems, gl.UNSIGNED_SHORT, 0);
+  gl.drawElements(gl.TRIANGLES, earthVertexIndexBuffer.numItems, gl.UNSIGNED_SHORT, 0);
 }
+
 
 function draw() {
   pwgl.requestId = requestAnimFrame(draw);
@@ -652,6 +656,12 @@ gl.uniform1i(pwgl.uniformSamplerLoc, 0);
 gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
 gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
+// Earth rotation animation
+pwgl.rotation += Math.PI /700;
+
+if (pwgl.rotation > 2 * Math.PI) {
+  pwgl.rotation = 0
+}
 
 // Draw earth
 pushModelViewMatrix();
@@ -661,11 +671,7 @@ uploadNormalMatrixToShader();
 drawEarth(pwgl.earthTexture);
 popModelViewMatrix();
 
-pwgl.rotation += Math.PI /750;
 
-if (pwgl.rotation > 2 * Math.PI) {
-  pwgl.rotation = 0
-}
 
 // Calculate the position for the box that is initially
 // on top of the table but will then be moved during animation
