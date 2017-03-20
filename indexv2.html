@@ -1,23 +1,10 @@
 <!DOCTYPE HTML>
-<!-- Many thanks to Dr. Jiacheng Tan, for learning support and providing template to base code on. -->
 <html lang="en">
 <head>
 <title> Phong Lighting, Phone Shading and Spotlight </title>
 <script src="webgl-debug.js"></script>
 <script type="text/javascript" src="glMatrix.js"></script>
 <script src="webgl-utils.js"></script>
-<style media="screen">
-body{
-background: url(textures/background.jpg) no-repeat center center fixed;
-background-size: cover;
-}
-canvas{
-  padding: 0;
-    margin: auto;
-    display: block;
-    width: 800px;
-}
-</style>
 <meta charset="utf-8">
 
 
@@ -108,8 +95,6 @@ var canvas;
 var transY = 0, transZ=0;
 var xRot =yRot =zRot =xOffs = yOffs = drag = 0;
 pwgl.listOfPressedKeys = []; // Keep track of pressed down keys in a list
-
-
 
 
 function createGLContext(canvas) {
@@ -235,36 +220,34 @@ throw "Error popModelViewMatrix() - Stack was empty ";
 }
 
 
-    var earthVertexPositionBuffer;
-    var earthVertexNormalBuffer;
-    var earthVertexTextureCoordBuffer;
-    var earthVertexIndexBuffer;
+    var moonVertexPositionBuffer;
+    var moonVertexNormalBuffer;
+    var moonVertexTextureCoordBuffer;
+    var moonVertexIndexBuffer;
 
-    // Calcution for sphere was learnt from resource lesson 11 - sphere, rotation matrices
-    // and mouse events. http://learningwebgl.com/blog/?p=1253
     function setupEarthBuffers() {
-        var latitudeSegments = 60;
-        var longitudeSegments = 60;
+        var latitudeBands = 60;
+        var longitudeBands = 60;
         var radius = 5;
 
         var vertexPositionData = [];
         var normalData = [];
         var textureCoordData = [];
-        for (var latNumber=0; latNumber <= latitudeSegments; latNumber++) {
-            var theta = latNumber * Math.PI / latitudeSegments;
+        for (var latNumber=0; latNumber <= latitudeBands; latNumber++) {
+            var theta = latNumber * Math.PI / latitudeBands;
             var sinTheta = Math.sin(theta);
             var cosTheta = Math.cos(theta);
 
-            for (var longNumber=0; longNumber <= longitudeSegments; longNumber++) {
-                var phi = longNumber * 2 * Math.PI / longitudeSegments;
+            for (var longNumber=0; longNumber <= longitudeBands; longNumber++) {
+                var phi = longNumber * 2 * Math.PI / longitudeBands;
                 var sinPhi = Math.sin(phi);
                 var cosPhi = Math.cos(phi);
 
                 var x = cosPhi * sinTheta;
                 var y = cosTheta;
                 var z = sinPhi * sinTheta;
-                var u = 1 - (longNumber / longitudeSegments);
-                var v = 1 - (latNumber / latitudeSegments);
+                var u = 1 - (longNumber / longitudeBands);
+                var v = 1 - (latNumber / latitudeBands);
 
                 normalData.push(x);
                 normalData.push(y);
@@ -278,10 +261,10 @@ throw "Error popModelViewMatrix() - Stack was empty ";
         }
 
         var indexData = [];
-        for (var latNumber=0; latNumber < latitudeSegments; latNumber++) {
-            for (var longNumber=0; longNumber < longitudeSegments; longNumber++) {
-                var first = (latNumber * (longitudeSegments + 1)) + longNumber;
-                var second = first + longitudeSegments + 1;
+        for (var latNumber=0; latNumber < latitudeBands; latNumber++) {
+            for (var longNumber=0; longNumber < longitudeBands; longNumber++) {
+                var first = (latNumber * (longitudeBands + 1)) + longNumber;
+                var second = first + longitudeBands + 1;
                 indexData.push(first);
                 indexData.push(second);
                 indexData.push(first + 1);
@@ -292,29 +275,29 @@ throw "Error popModelViewMatrix() - Stack was empty ";
             }
         }
 
-        earthVertexNormalBuffer = gl.createBuffer();
-        gl.bindBuffer(gl.ARRAY_BUFFER, earthVertexNormalBuffer);
+        moonVertexNormalBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, moonVertexNormalBuffer);
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(normalData), gl.STATIC_DRAW);
-        earthVertexNormalBuffer.itemSize = 3;
-        earthVertexNormalBuffer.numItems = normalData.length / 3;
+        moonVertexNormalBuffer.itemSize = 3;
+        moonVertexNormalBuffer.numItems = normalData.length / 3;
 
-        earthVertexTextureCoordBuffer = gl.createBuffer();
-        gl.bindBuffer(gl.ARRAY_BUFFER, earthVertexTextureCoordBuffer);
+        moonVertexTextureCoordBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, moonVertexTextureCoordBuffer);
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(textureCoordData), gl.STATIC_DRAW);
-        earthVertexTextureCoordBuffer.itemSize = 2;
-        earthVertexTextureCoordBuffer.numItems = textureCoordData.length / 2;
+        moonVertexTextureCoordBuffer.itemSize = 2;
+        moonVertexTextureCoordBuffer.numItems = textureCoordData.length / 2;
 
-        earthVertexPositionBuffer = gl.createBuffer();
-        gl.bindBuffer(gl.ARRAY_BUFFER, earthVertexPositionBuffer);
+        moonVertexPositionBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, moonVertexPositionBuffer);
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertexPositionData), gl.STATIC_DRAW);
-        earthVertexPositionBuffer.itemSize = 3;
-        earthVertexPositionBuffer.numItems = vertexPositionData.length / 3;
+        moonVertexPositionBuffer.itemSize = 3;
+        moonVertexPositionBuffer.numItems = vertexPositionData.length / 3;
 
-        earthVertexIndexBuffer = gl.createBuffer();
-        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, earthVertexIndexBuffer);
+        moonVertexIndexBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, moonVertexIndexBuffer);
         gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indexData), gl.STATIC_DRAW);
-        earthVertexIndexBuffer.itemSize = 1;
-        earthVertexIndexBuffer.numItems = indexData.length;
+        moonVertexIndexBuffer.itemSize = 1;
+        moonVertexIndexBuffer.numItems = indexData.length;
     }
 
 
@@ -325,40 +308,40 @@ function setupCubeBuffers() {
   gl.bindBuffer(gl.ARRAY_BUFFER, pwgl.cubeVertexPositionBuffer);
   var cubeVertexPosition = [
        // Front face
-       0.2,  0.2,  0.2, //v0
-      -0.2,  0.2,  0.2, //v1
-      -0.2, -0.2,  0.2, //v2
-       0.2, -0.2,  0.2, //v3
+       1.0,  1.0,  1.0, //v0
+      -1.0,  1.0,  1.0, //v1
+      -1.0, -1.0,  1.0, //v2
+       1.0, -1.0,  1.0, //v3
 
        // Back face
-       0.2,  0.2, -0.2, //v4
-      -0.2,  0.2, -0.2, //v5
-      -0.2, -0.2, -0.2, //v6
-       0.2, -0.2, -0.2, //v7
+       1.0,  1.0, -1.0, //v4
+      -1.0,  1.0, -1.0, //v5
+      -1.0, -1.0, -1.0, //v6
+       1.0, -1.0, -1.0, //v7
 
        // Left face
-      -0.2,  0.2,  0.2, //v8
-      -0.2,  0.2, -0.2, //v9
-      -0.2, -0.2, -0.2, //v10
-      -0.2, -0.2,  0.2, //v11
+      -1.0,  1.0,  1.0, //v8
+      -1.0,  1.0, -1.0, //v9
+      -1.0, -1.0, -1.0, //v10
+      -1.0, -1.0,  1.0, //v11
 
        // Right face
-       0.2,  0.2,  0.2, //12
-       0.2, -0.2,  0.2, //13
-       0.2, -0.2, -0.2, //14
-       0.2,  0.2, -0.2, //15
+       1.0,  1.0,  1.0, //12
+       1.0, -1.0,  1.0, //13
+       1.0, -1.0, -1.0, //14
+       1.0,  1.0, -1.0, //15
 
         // Top face
-        0.2,  0.2,  0.2, //v16
-        0.2,  0.2, -0.2, //v17
-       -0.2,  0.2, -0.2, //v18
-       -0.2,  0.2,  0.2, //v19
+        1.0,  1.0,  1.0, //v16
+        1.0,  1.0, -1.0, //v17
+       -1.0,  1.0, -1.0, //v18
+       -1.0,  1.0,  1.0, //v19
 
         // Bottom face
-        0.2, -0.2,  0.2, //v20
-        0.2, -0.2, -0.2, //v21
-       -0.2, -0.2, -0.2, //v22
-       -0.2, -0.2,  0.2, //v23
+        1.0, -1.0,  1.0, //v20
+        1.0, -1.0, -1.0, //v21
+       -1.0, -1.0, -1.0, //v22
+       -1.0, -1.0,  1.0, //v23
   	];
 
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(cubeVertexPosition), gl.STATIC_DRAW);
@@ -486,12 +469,12 @@ function setupTextures() {
   loadImageForTexture("textures/earth.jpg", pwgl.earthTexture);
 
   // Texture for the floor
-  pwgl.satelliteTexture = gl.createTexture();
-  loadImageForTexture("textures/gold.jpg", pwgl.satelliteTexture);
+  pwgl.groundTexture = gl.createTexture();
+  loadImageForTexture("metal_floor_256.jpg", pwgl.groundTexture);
 
   // Texture for the box on the table
-  pwgl.solarTexture = gl.createTexture();
-  loadImageForTexture("textures/blue.png", pwgl.solarTexture);
+  pwgl.boxTexture = gl.createTexture();
+  loadImageForTexture("wicker_256.jpg", pwgl.boxTexture);
 }
 
 function loadImageForTexture(url, texture) {
@@ -526,12 +509,13 @@ function setupBuffers() {
   setupEarthBuffers();
 }
 
+
 function setupLights() {
   // Play with light position and orientation to see its effect.
-  gl.uniform3fv(pwgl.uniformLightPositionLoc, [60.0, 60.0, 0.0]);
-  gl.uniform3fv(pwgl.uniformAmbientLightColorLoc, [0.05, 0.05, 0.05]);
-  gl.uniform3fv(pwgl.uniformDiffuseLightColorLoc, [0.8, 0.8, 0.8]);
-  gl.uniform3fv(pwgl.uniformSpecularLightColorLoc, [0.1, 0.1, 0.1]);
+  gl.uniform3fv(pwgl.uniformLightPositionLoc, [0.0, 60.0, 0.0]);
+  gl.uniform3fv(pwgl.uniformAmbientLightColorLoc, [0.2, 0.2, 0.2]);
+  gl.uniform3fv(pwgl.uniformDiffuseLightColorLoc, [0.7, 0.7, 0.7]);
+  gl.uniform3fv(pwgl.uniformSpecularLightColorLoc, [0.8, 0.8, 0.8]);
 }
 
 function uploadNormalMatrixToShader() {
@@ -570,70 +554,23 @@ function drawCube(texture) {
   gl.drawElements(gl.TRIANGLES, pwgl.CUBE_VERTEX_INDEX_BUF_NUM_ITEMS, gl.UNSIGNED_SHORT, 0);
 }
 
-function drawSatellite(){
-  pushModelViewMatrix();
-  mat4.scale(pwgl.modelViewMatrix, [2, 2, 2], pwgl.modelViewMatrix); //2x2x2
-  uploadModelViewMatrixToShader();
-  uploadNormalMatrixToShader();
-  drawCube(pwgl.satelliteTexture);
-  popModelViewMatrix();
-
-// satelite arms
-  pushModelViewMatrix();
-  mat4.translate(pwgl.modelViewMatrix, [0.0, 0.0, 0.5], pwgl.modelViewMatrix);
-  mat4.scale(pwgl.modelViewMatrix, [0.2, 0.2, 0.5], pwgl.modelViewMatrix);
-  uploadModelViewMatrixToShader();
-  uploadNormalMatrixToShader();
-  drawCube(pwgl.satelliteTexture);  //Draw the legs with woodTexture
-  popModelViewMatrix();
-
-  pushModelViewMatrix();
-  mat4.translate(pwgl.modelViewMatrix, [0.0, 0.0, -0.5], pwgl.modelViewMatrix);
-  mat4.scale(pwgl.modelViewMatrix, [0.2, 0.2, 0.5], pwgl.modelViewMatrix);
-  uploadModelViewMatrixToShader();
-  uploadNormalMatrixToShader();
-  drawCube(pwgl.satelliteTexture);  //Draw the legs with woodTexture
-  popModelViewMatrix();
-
-
-// Solar panels
-  pushModelViewMatrix();
-  mat4.translate(pwgl.modelViewMatrix, [0.0, 0.0, 1], pwgl.modelViewMatrix);
-  mat4.scale(pwgl.modelViewMatrix, [1, 0.05, 2], pwgl.modelViewMatrix);
-  uploadModelViewMatrixToShader();
-  uploadNormalMatrixToShader();
-  drawCube(pwgl.solarTexture);  //Draw the legs with woodTexture
-  popModelViewMatrix();
-
-  pushModelViewMatrix();
-  mat4.translate(pwgl.modelViewMatrix, [0.0, 0.0, -1], pwgl.modelViewMatrix);
-  mat4.scale(pwgl.modelViewMatrix, [1, 0.05, 2], pwgl.modelViewMatrix);
-  uploadModelViewMatrixToShader();
-  uploadNormalMatrixToShader();
-  drawCube(pwgl.solarTexture);  //Draw the legs with woodTexture
-  popModelViewMatrix();
-
-
-}
-
 function drawEarth(texture) {
     gl.activeTexture(gl.TEXTURE0);
   gl.bindTexture(gl.TEXTURE_2D, texture);
 
-  gl.bindBuffer(gl.ARRAY_BUFFER, earthVertexPositionBuffer);
-  gl.vertexAttribPointer(pwgl.vertexPositionAttributeLoc, earthVertexPositionBuffer.itemSize, gl.FLOAT, false, 0, 0);
+  gl.bindBuffer(gl.ARRAY_BUFFER, moonVertexPositionBuffer);
+  gl.vertexAttribPointer(pwgl.vertexPositionAttributeLoc, moonVertexPositionBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
-  gl.bindBuffer(gl.ARRAY_BUFFER, earthVertexTextureCoordBuffer);
-  gl.vertexAttribPointer(pwgl.vertexTextureAttributeLoc, earthVertexTextureCoordBuffer.itemSize, gl.FLOAT, false, 0, 0);
+  gl.bindBuffer(gl.ARRAY_BUFFER, moonVertexTextureCoordBuffer);
+  gl.vertexAttribPointer(pwgl.vertexTextureAttributeLoc, moonVertexTextureCoordBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
-  gl.bindBuffer(gl.ARRAY_BUFFER, earthVertexNormalBuffer);
-  gl.vertexAttribPointer(pwgl.vertexNormalAttributeLoc, earthVertexNormalBuffer.itemSize, gl.FLOAT, false, 0, 0);
+  gl.bindBuffer(gl.ARRAY_BUFFER, moonVertexNormalBuffer);
+  gl.vertexAttribPointer(pwgl.vertexNormalAttributeLoc, moonVertexNormalBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
-  gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, earthVertexIndexBuffer);
+  gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, moonVertexIndexBuffer);
 
-  gl.drawElements(gl.TRIANGLES, earthVertexIndexBuffer.numItems, gl.UNSIGNED_SHORT, 0);
+  gl.drawElements(gl.TRIANGLES, moonVertexIndexBuffer.numItems, gl.UNSIGNED_SHORT, 0);
 }
-
 
 function draw() {
   pwgl.requestId = requestAnimFrame(draw);
@@ -642,7 +579,15 @@ function draw() {
 
   handlePressedDownKeys();
 
-mat4.translate(pwgl.modelViewMatrix, [0.0, transY, transZ],pwgl.modelViewMatrix);
+  // Update FPS if a second or more has passed since last FPS update
+  if(currentTime - pwgl.previousFrameTimeStamp >= 1000) {
+pwgl.fpsCounter.innerHTML = pwgl.nbrOfFramesForFPS;
+pwgl.nbrOfFramesForFPS = 0;
+pwgl.previousFrameTimeStamp = currentTime;
+  }
+
+mat4.translate(pwgl.modelViewMatrix, [0.0, transY, transZ],
+	pwgl.modelViewMatrix);
 mat4.rotateX(pwgl.modelViewMatrix, xRot/50, pwgl.modelViewMatrix);
 mat4.rotateY(pwgl.modelViewMatrix, yRot/50, pwgl.modelViewMatrix);
 
@@ -656,12 +601,6 @@ gl.uniform1i(pwgl.uniformSamplerLoc, 0);
 gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
 gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-// Earth rotation animation
-pwgl.rotation += Math.PI /700;
-
-if (pwgl.rotation > 2 * Math.PI) {
-  pwgl.rotation = 0
-}
 
 // Draw earth
 pushModelViewMatrix();
@@ -671,6 +610,12 @@ uploadNormalMatrixToShader();
 drawEarth(pwgl.earthTexture);
 popModelViewMatrix();
 
+pwgl.rotation += Math.PI /750;
+
+if (pwgl.rotation > 2 * Math.PI) {
+  pwgl.rotation = 0
+}
+
 
 
 // Calculate the position for the box that is initially
@@ -679,14 +624,19 @@ pushModelViewMatrix();
 if (pwgl.animationStartTime === undefined) {
 pwgl.animationStartTime = currentTime;
 }
-// Keeps satellite faceing the earth
-pwgl.angle += (currentTime - pwgl.previousFrameTimeStamp)/pwgl.orbitTime*2*Math.PI %(2*Math.PI);
+
+pwgl.angle += (currentTime - pwgl.previousFrameTimeStamp)/4000*2*Math.PI %(2*Math.PI);
 pwgl.x = Math.cos(pwgl.angle) * pwgl.circleRadius;
 pwgl.z = Math.sin(pwgl.angle) * pwgl.circleRadius;
 pwgl.previousFrameTimeStamp = currentTime;
-mat4.translate(pwgl.modelViewMatrix, [pwgl.x,pwgl.y, pwgl.z], pwgl.modelViewMatrix);
+
+
+mat4.translate(pwgl.modelViewMatrix, [pwgl.x, pwgl.y, pwgl.z], pwgl.modelViewMatrix);
 mat4.rotateY(pwgl.modelViewMatrix, (Math.PI - pwgl.angle), pwgl.modelViewMatrix);
-drawSatellite();
+mat4.scale(pwgl.modelViewMatrix, [0.2, 0.2, 0.2], pwgl.modelViewMatrix);
+uploadModelViewMatrixToShader();
+uploadNormalMatrixToShader();
+drawCube(pwgl.boxTexture);
 popModelViewMatrix();
 
 // Update number of drawn frames to be able to count fps
@@ -710,21 +660,15 @@ setupShaders();
 setupBuffers();
 setupLights();
 setupTextures();
-//gl.clearColor(0.0, 0.0, 0.0, 1.0);
+gl.clearColor(0.0, 0.0, 0.0, 1.0);
 gl.enable(gl.DEPTH_TEST);
 
 // Initialize some varibles for the moving box
 pwgl.x = 0.0;
 pwgl.y = 0.0;
 pwgl.z = 0.0;
-pwgl.angle = 0;
-// sets default radius on load
 pwgl.circleRadius = 8;
-// sets the min and max radius
-pwgl.mincircleRadius = 6;
-pwgl.maxcircleRadius = 15;
-// orbit time is needed to target the animation for satellite speed.
-pwgl.orbitTime = 8000;
+pwgl.angle = 0;
 
 // Initializes earth rotation
 pwgl.rotation = 0;
@@ -738,7 +682,7 @@ pwgl.previousFrameTimeStamp = Date.now();
 mat4.perspective(45, gl.viewportWidth / gl.viewportHeight,
 1, 120.0, pwgl.projectionMatrix);
 mat4.identity(pwgl.modelViewMatrix);
-mat4.lookAt([0, 0, 30],[0, 0, 0], [0, 1,0], pwgl.modelViewMatrix);
+mat4.lookAt([0, 0, 25],[0, 0, 0], [0, 1,0], pwgl.modelViewMatrix);
 }
 
 function handleContextRestored(event) {
@@ -755,31 +699,18 @@ function handleKeyUp(event) {
 }
 
 function handlePressedDownKeys() {
-  // Arrow up, increase the max radius of satellite
   if (pwgl.listOfPressedKeys[38]) {
-    if(pwgl.circleRadius <= pwgl.maxcircleRadius){
-      pwgl.circleRadius += 0.1;
-    }
+// Arrow up, increase radius of circle
+pwgl.circleRadius += 0.1;
   }
-  // Arrow down, decrease the max radius of satellite
-  if (pwgl.listOfPressedKeys[40]) {
-    if (pwgl.circleRadius >= pwgl.mincircleRadius) {
-      pwgl.circleRadius -= 0.1;
-    }
-  }
-  // left arrow, slow down orbit of satellite
-  if (pwgl.listOfPressedKeys[37]) {
-    if (pwgl.orbitTime <= 20000) {
-      pwgl.orbitTime += 20;
-    }
-  }
-  // right arrow, faster oebit of satellite
-  if (pwgl.listOfPressedKeys[39]) {
-    if (pwgl.orbitTime >= 1000) {
-      pwgl.orbitTime -= 20;
-    }
-  }
-  // Enter next controls here
+
+if (pwgl.listOfPressedKeys[40]) {
+// Arrow down, decrease radius of circle
+pwgl.circleRadius -= 0.1;
+if (pwgl.circleRadius < 0) {
+    pwgl.circleRadius = 0;
+}
+}
 }
 
 
@@ -801,6 +732,9 @@ canvas.addEventListener('DOMMouseScroll', wheelHandler, false);
 gl = createGLContext(canvas);
 
 init();
+
+pwgl.fpsCounter = document.getElementById("fps");
+
 // Draw the complete scene
 draw();
 }
@@ -843,6 +777,7 @@ ev.preventDefault();
 
 </head>
 <body onload="startup();">
-<canvas id="myGLCanvas" width="650" height="650"></canvas>
+<canvas id="myGLCanvas" width="600" height="600"></canvas>
+<div id="fps-counter"> FPS: <span id="fps">--</span></div>
 </body>
 </html>
